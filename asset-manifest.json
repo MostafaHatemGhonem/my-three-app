@@ -1,13 +1,13 @@
 {
   "files": {
     "main.css": "/my-three-app/static/css/main.fad35dfd.css",
-    "main.js": "/my-three-app/static/js/main.b457c18e.js",
+    "main.js": "/my-three-app/static/js/main.822a0bbb.js",
     "index.html": "/my-three-app/index.html",
     "main.fad35dfd.css.map": "/my-three-app/static/css/main.fad35dfd.css.map",
-    "main.b457c18e.js.map": "/my-three-app/static/js/main.b457c18e.js.map"
+    "main.822a0bbb.js.map": "/my-three-app/static/js/main.822a0bbb.js.map"
   },
   "entrypoints": [
     "static/css/main.fad35dfd.css",
-    "static/js/main.b457c18e.js"
+    "static/js/main.822a0bbb.js"
   ]
 }
