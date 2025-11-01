@@ -1,38 +1,88 @@
+/* أساسيات */
+* { box-sizing: border-box; }
+
 .App {
   text-align: center;
-}
-
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+  min-height: 100vh;            /* يضمن تغطية الشاشة كاملة */
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+  padding: 20px;               /* مسافة داخلية للأجهزة الصغيرة */
 }
 
+/* الشعار — استخدم قياسات نسبية مع حد أقصى للهواتف */
+.App-logo {
+  height: 40vmin;              /* نفس الأسلوب القديم بالنسبة للعرض/الارتفاع */
+  max-height: 280px;           /* لا يجعل الشعار ضخمًا على شاشات كبيرة جدا */
+  pointer-events: none;
+  display: block;
+  margin: 0 auto;
+}
+
+/* لو المستخدم يفضّل تقليل الحركة نلتزم بذلك */
+@media (prefers-reduced-motion: no-preference) {
+  .App-logo {
+    animation: App-logo-spin infinite 20s linear;
+    will-change: transform;    /* hint لتحسين الأداء */
+  }
+}
+
+/* هيدر التطبيق — اجعل الخطوط مرنة */
+.App-header {
+  background-color: #282c34;
+  width: 100%;
+  /* min-height سابقًا 100vh — احتفظنا به داخل .App لذا نترك هنا أقل */
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(12px + 1.2vmin); /* مقروئية أفضل على الهواتف */
+  color: white;
+  padding: 24px;
+}
+
+/* روابط */
 .App-link {
   color: #61dafb;
+  word-break: break-word;      /* تمنع كسر التخطيط عند روابط طويلة */
 }
 
+/* keyframes */
 @keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* --- تحسينات للـ mobile / شاشات صغيرة --- */
+@media (max-width: 480px) {
+  .App-logo {
+    height: 32vmin;          /* أصغر قليلاً على الهواتف */
+    max-height: 180px;       /* حد أقصى مناسب للهواتف */
   }
-  to {
-    transform: rotate(360deg);
+
+  .App-header {
+    min-height: 50vh;
+    padding: 16px;
+    font-size: calc(11px + 1.6vmin);
   }
+
+  /* إذا عندك عناصر داخل الهيدر (buttons, p, h1) خليها تأخذ عرضًا مناسبًا */
+  .App-header > * {
+    width: 100%;
+    max-width: 420px;
+  }
+}
+
+/* --- تحسينات للـ tablet --- */
+@media (min-width: 481px) and (max-width: 900px) {
+  .App-logo { max-height: 220px; }
+  .App-header { min-height: 55vh; padding: 20px; }
+}
+
+/* --- تحسينات للطاولات والشاشات الكبيرة --- */
+@media (min-width: 1200px) {
+  .App-logo { height: 35vmin; max-height: 360px; }
+  .App-header { font-size: calc(14px + 1vmin); padding: 40px; }
 }
