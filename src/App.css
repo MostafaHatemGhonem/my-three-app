@@ -1,88 +1,167 @@
-/* أساسيات */
-* { box-sizing: border-box; }
+import React, { useMemo, useState, useEffect } from "react";
+import HyperbolicCanvas, { OrbitalParams } from "./HyperbolicCanvas";
 
-.App {
-  text-align: center;
-  min-height: 100vh;            /* يضمن تغطية الشاشة كاملة */
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;               /* مسافة داخلية للأجهزة الصغيرة */
+/**
+ * DualHyperbolic
+ * - يعرض رسمتين (A و B). على الموبايل: يظهر B افتراضياً، لكن لوحة التحكم تغير باراميترات A.
+ * - يمكن للمستخدم أن يضغط "Show A" ليعرض الرسمَة الأولى مؤقتاً على الموبايل.
+ */
+
+const defaultA: OrbitalParams = {
+  e: 1.5,
+  p: 9000,
+  omega: 30,
+  nu0: -40,
+  nuf: 80,
+  samples: 800,
+  focusRange: 15000,
+};
+
+const defaultB: OrbitalParams = {
+  e: 1.8,
+  p: 7000,
+  omega: -20,
+  nu0: -60,
+  nuf: 60,
+  samples: 1000,
+  focusRange: 15000,
+};
+
+function useIsMobile(breakpoint = 480) {
+  const [isMobile, setIsMobile] = useState(() => typeof window !== "undefined" ? window.innerWidth < breakpoint : false);
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < breakpoint);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [breakpoint]);
+  return isMobile;
 }
 
-/* الشعار — استخدم قياسات نسبية مع حد أقصى للهواتف */
-.App-logo {
-  height: 40vmin;              /* نفس الأسلوب القديم بالنسبة للعرض/الارتفاع */
-  max-height: 280px;           /* لا يجعل الشعار ضخمًا على شاشات كبيرة جدا */
-  pointer-events: none;
-  display: block;
-  margin: 0 auto;
+export default function DualHyperbolic() {
+  const isMobile = useIsMobile(480);
+
+  // params state for A and B
+  const [paramsA, setParamsA] = useState<OrbitalParams>(defaultA);
+  const [paramsB] = useState<OrbitalParams>(defaultB);
+
+  // toggle to temporarily show A on mobile
+  const [showAonMobile, setShowAonMobile] = useState(false);
+
+  // convenience: derived which canvas is visible
+  const showA = isMobile ? showAonMobile : true; // on desktop show both, but in layout we will place them side-by-side
+  const showB = isMobile ? !showAonMobile : true;
+
+  // small handler to update numeric param fields (keeps types)
+  const updateA = (k: keyof OrbitalParams, v: number) => {
+    setParamsA(prev => ({ ...prev, [k]: v }));
+  };
+
+  // UI for controls (Arabic labels)
+  const Controls = useMemo(() => (
+    <div style={styles.controls}>
+      <h3 style={{ margin: "0 0 8px 0" }}>تحكّم في الرسمَة الأولى (A)</h3>
+
+      <label style={styles.label}>e (excentricity): {paramsA.e.toFixed(2)}</label>
+      <input style={styles.range} type="range" min={1.01} max={5} step={0.01} value={paramsA.e} onChange={e => updateA("e", parseFloat(e.target.value))} />
+
+      <label style={styles.label}>p (parameter): {Math.round(paramsA.p)}</label>
+      <input style={styles.range} type="range" min={1000} max={30000} step={100} value={paramsA.p} onChange={e => updateA("p", parseFloat(e.target.value))} />
+
+      <label style={styles.label}>ω (omega°): {Math.round(paramsA.omega)}°</label>
+      <input style={styles.range} type="range" min={-180} max={180} step={1} value={paramsA.omega} onChange={e => updateA("omega", parseFloat(e.target.value))} />
+
+      <label style={styles.label}>ν₀ (nu0°): {Math.round(paramsA.nu0)}°</label>
+      <input style={styles.range} type="range" min={-180} max={180} step={1} value={paramsA.nu0} onChange={e => updateA("nu0", parseFloat(e.target.value))} />
+
+      <label style={styles.label}>ν_f (nuf°): {Math.round(paramsA.nuf)}°</label>
+      <input style={styles.range} type="range" min={-180} max={180} step={1} value={paramsA.nuf} onChange={e => updateA("nuf", parseFloat(e.target.value))} />
+
+      <label style={styles.label}>samples: {paramsA.samples ?? 1000}</label>
+      <input style={styles.range} type="range" min={100} max={2000} step={50} value={paramsA.samples ?? 1000} onChange={e => updateA("samples", parseInt(e.target.value, 10))} />
+
+      <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+        <button style={styles.btn} onClick={() => setParamsA(defaultA)}>Reset A</button>
+        {isMobile && <button style={{ ...styles.btn, background: "#1976d2", color: "#fff" }} onClick={() => setShowAonMobile(s => !s)}>{showAonMobile ? "عرض B" : "عرض A"}</button>}
+      </div>
+    </div>
+  ), [paramsA, isMobile, showAonMobile]);
+
+  return (
+    <div style={styles.container}>
+      {/* controls column (on mobile appears on top) */}
+      <div style={{ ...styles.sidebar, order: isMobile ? 0 : 0 }}>
+        {Controls}
+      </div>
+
+      {/* canvases */}
+      <div style={styles.canvasArea}>
+        {/* Canvas A */}
+        { /* On mobile hide via inline style to not remove component state (keeps it mounted) */ }
+        <div style={{ ...styles.canvasWrapper, display: showA ? "block" : "none" }}>
+          <div style={styles.canvasLabel}>الرسمَة A (قابلة للتحكم)</div>
+          <HyperbolicCanvas params={paramsA} />
+        </div>
+
+        {/* Canvas B */}
+        <div style={{ ...styles.canvasWrapper, display: showB ? "block" : "none" }}>
+          <div style={styles.canvasLabel}>الرسمَة B (افتراضية على الموبايل)</div>
+          <HyperbolicCanvas params={paramsB} />
+        </div>
+      </div>
+    </div>
+  );
 }
 
-/* لو المستخدم يفضّل تقليل الحركة نلتزم بذلك */
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-    will-change: transform;    /* hint لتحسين الأداء */
-  }
-}
-
-/* هيدر التطبيق — اجعل الخطوط مرنة */
-.App-header {
-  background-color: #282c34;
-  width: 100%;
-  /* min-height سابقًا 100vh — احتفظنا به داخل .App لذا نترك هنا أقل */
-  min-height: 60vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(12px + 1.2vmin); /* مقروئية أفضل على الهواتف */
-  color: white;
-  padding: 24px;
-}
-
-/* روابط */
-.App-link {
-  color: #61dafb;
-  word-break: break-word;      /* تمنع كسر التخطيط عند روابط طويلة */
-}
-
-/* keyframes */
-@keyframes App-logo-spin {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
-}
-
-/* --- تحسينات للـ mobile / شاشات صغيرة --- */
-@media (max-width: 480px) {
-  .App-logo {
-    height: 32vmin;          /* أصغر قليلاً على الهواتف */
-    max-height: 180px;       /* حد أقصى مناسب للهواتف */
-  }
-
-  .App-header {
-    min-height: 50vh;
-    padding: 16px;
-    font-size: calc(11px + 1.6vmin);
-  }
-
-  /* إذا عندك عناصر داخل الهيدر (buttons, p, h1) خليها تأخذ عرضًا مناسبًا */
-  .App-header > * {
-    width: 100%;
-    max-width: 420px;
-  }
-}
-
-/* --- تحسينات للـ tablet --- */
-@media (min-width: 481px) and (max-width: 900px) {
-  .App-logo { max-height: 220px; }
-  .App-header { min-height: 55vh; padding: 20px; }
-}
-
-/* --- تحسينات للطاولات والشاشات الكبيرة --- */
-@media (min-width: 1200px) {
-  .App-logo { height: 35vmin; max-height: 360px; }
-  .App-header { font-size: calc(14px + 1vmin); padding: 40px; }
-}
+/* Inline styles بسيطة لتسريع الاختبار — تقدر تنقلها لملف CSS */
+const styles: Record<string, React.CSSProperties> = {
+  container: {
+    display: "flex",
+    gap: 16,
+    alignItems: "flex-start",
+    justifyContent: "center",
+    width: "100%",
+    padding: 12,
+    boxSizing: "border-box",
+    flexWrap: "wrap",
+  },
+  sidebar: {
+    minWidth: 260,
+    maxWidth: 360,
+    flex: "0 0 320px",
+  },
+  canvasArea: {
+    flex: 1,
+    minWidth: 280,
+    maxWidth: 900,
+    display: "flex",
+    flexDirection: "column",
+    gap: 12,
+  },
+  canvasWrapper: {
+    background: "#fff",
+    borderRadius: 10,
+    padding: 8,
+    boxShadow: "0 6px 18px rgba(0,0,0,0.08)",
+  },
+  canvasLabel: {
+    textAlign: "right",
+    fontSize: 13,
+    color: "#333",
+    marginBottom: 6,
+  },
+  controls: {
+    background: "#fff",
+    borderRadius: 10,
+    padding: 12,
+    boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
+  },
+  label: { display: "block", fontSize: 13, textAlign: "right", margin: "8px 0 4px" },
+  range: { width: "100%" },
+  btn: {
+    padding: "8px 12px",
+    borderRadius: 6,
+    border: "1px solid #ccc",
+    background: "#f6f6f6",
+    cursor: "pointer",
+  },
+};

@@ -1,5 +1,5 @@
 import React from "react";
-import OrbitDashboard from "./OrbitDashboard";
+import DualHyperbolic from "./components/DualHyperbolic";
 
 function App() {
   return (
@@ -8,7 +8,7 @@ function App() {
         <h1 style={{ margin: 0 }}>Orbit Dashboard (2D) — React + TypeScript</h1>
       </header>
       <main>
-        <OrbitDashboard />
+        <DualHyperbolic />
       </main>
     </div>
   );
